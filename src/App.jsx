@@ -791,55 +791,7 @@ function PublicSquare() {
   );
 }
 
-  return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
-        <div className="font-display" style={{ fontSize:24 }}>Public Square</div>
-        <Pill tone="success" icon={CheckCircle2}>Consent verified</Pill>
-      </div>
-      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
-        <span style={{ fontSize:12.5, color:'var(--ink-soft)', fontWeight:600 }}>Age band:</span>
-        {AGE_BANDS.map(b => (
-          <button key={b.key} className={`sage-chip ${!showAllAges && ageFilter===b.key ? 'selected':''}`}
-            onClick={() => { setAgeFilter(b.key); setShowAllAges(false); }}>{b.key}</button>
-        ))}
-        <button className={`sage-chip ${showAllAges ? 'selected':''}`} onClick={() => setShowAllAges(true)}>All bands</button>
-      </div>
-      <div className="sage-grid-3">
-        {visibleEvents.map(ev => {
-          const karma = STUDENT.karma[ev.category] || 0;
-          const eligible = karma >= ev.threshold;
-          return (
-            <div key={ev.id} className="sage-card" style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                <Pill tone={TIER_TONE[ev.tier]}>{TIER_LABEL[ev.tier]}</Pill>
-                {eligible ? <Pill tone="success" icon={Unlock}>Eligible</Pill> : <Pill tone="danger" icon={Lock}>Locked</Pill>}
-              </div>
-              <div style={{ fontWeight:700, fontSize:15 }}>{ev.name}</div>
-              <div style={{ fontSize:12.5, color:'var(--ink-soft)' }}>{ev.org}</div>
-              <div style={{ fontSize:12.5, color:'var(--ink-soft)', display:'flex', gap:10, flexWrap:'wrap' }}>
-                <span><MapPin size={12} style={{ verticalAlign:-2 }} /> {ev.city}</span>
-                <span><Calendar size={12} style={{ verticalAlign:-2 }} /> {ev.date}</span>
-              </div>
-              <div style={{ marginTop:4 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'var(--ink-soft)', marginBottom:4 }}>
-                  <span>{ev.category} Karma needed</span><span>{karma} / {ev.threshold}</span>
-                </div>
-                <ProgressBar pct={(karma/ev.threshold)*100} tone={eligible ? 'sage':'gold'} />
-              </div>
-              <button className={`sage-btn ${eligible ? 'sage-btn-primary':'sage-btn-outline'} sage-btn-sm`} disabled={!eligible} style={{ marginTop:6 }}>
-                {eligible ? 'Register' : `Need ${ev.threshold - karma} more ${ev.category} Karma`}
-              </button>
-            </div>
-          );
-        })}
-        {visibleEvents.length === 0 && (
-          <div className="sage-card" style={{ gridColumn:'1/-1', textAlign:'center', color:'var(--ink-soft)' }}>No events for this age band right now.</div>
-        )}
-      </div>
-    </div>
-  );
-}
+  
 
 /* ============================= LEARNER: AI ANALYTICS ============================= */
 
