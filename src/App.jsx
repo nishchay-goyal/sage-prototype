@@ -621,11 +621,79 @@ function ConsentModal({ onClose, onVerified }) {
   );
 }
 
+function EventRegistrationModal({ event, onClose, onSuccess }) {
+  const [stage, setStage] = useState('confirm'); // confirm -> processing -> done
+
+  useEffect(() => {
+    if (stage === 'processing') {
+      const t = setTimeout(() => setStage('done'), 1200);
+      return () => clearTimeout(t);
+    }
+    if (stage === 'done') {
+      const t = setTimeout(() => onSuccess(event.id), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [stage]);
+
+  if (!event) return null;
+
+  return (
+    <div className="sage-modal-backdrop" onClick={onClose}>
+      <div className="sage-modal" onClick={e => e.stopPropagation()}>
+        <button className="sage-modal-close" onClick={onClose}><X size={16} /></button>
+        
+        {stage === 'confirm' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--sage-mist)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                📅
+              </div>
+              <div>
+                <div className="font-display" style={{ fontSize: 19, lineHeight: 1.2 }}>{event.name}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{event.org}</div>
+              </div>
+            </div>
+            
+            <div style={{ padding: '14px 16px', background: 'var(--cream)', borderRadius: 12, marginBottom: 20, fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink-soft)' }}>Date:</span> <strong>{event.date}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink-soft)' }}>Location:</span> <strong>{event.city}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--ink-soft)' }}>Requirement:</span> <strong>{event.threshold} {event.category} Karma</strong></div>
+            </div>
+            
+            <button className="sage-btn sage-btn-primary" style={{ width: '100%' }} onClick={() => setStage('processing')}>
+              Confirm Registration
+            </button>
+          </>
+        )}
+        
+        {stage === 'processing' && (
+          <div style={{ textAlign: 'center', padding: '28px 0' }}>
+            <Loader2 size={32} className="sage-spin" color="var(--sage-green)" style={{ margin: '0 auto' }} />
+            <div style={{ marginTop: 16, fontWeight: 600 }}>Securing your spot…</div>
+          </div>
+        )}
+        
+        {stage === 'done' && (
+          <div style={{ textAlign: 'center', padding: '28px 0' }}>
+            <CheckCircle2 size={38} color="var(--success)" style={{ margin: '0 auto' }} />
+            <div className="font-display" style={{ fontSize: 22, marginTop: 14 }}>Success!</div>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 4 }}>You are registered for this event.</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PublicSquare() {
   const [consent, setConsent] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [ageFilter, setAgeFilter] = useState(STUDENT.ageBand);
   const [showAllAges, setShowAllAges] = useState(false);
+  
+  // New state to track registrations
+  const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   const visibleEvents = PUBLIC_EVENTS.filter(ev => showAllAges || ev.ageBand === ageFilter);
 
@@ -646,6 +714,82 @@ function PublicSquare() {
       </div>
     );
   }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+        <div className="font-display" style={{ fontSize:24 }}>Public Square</div>
+        <Pill tone="success" icon={CheckCircle2}>Consent verified</Pill>
+      </div>
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+        <span style={{ fontSize:12.5, color:'var(--ink-soft)', fontWeight:600 }}>Age band:</span>
+        {AGE_BANDS.map(b => (
+          <button key={b.key} className={`sage-chip ${!showAllAges && ageFilter===b.key ? 'selected':''}`}
+            onClick={() => { setAgeFilter(b.key); setShowAllAges(false); }}>{b.key}</button>
+        ))}
+        <button className={`sage-chip ${showAllAges ? 'selected':''}`} onClick={() => setShowAllAges(true)}>All bands</button>
+      </div>
+      
+      <div className="sage-grid-3">
+        {visibleEvents.map(ev => {
+          const karma = STUDENT.karma[ev.category] || 0;
+          const eligible = karma >= ev.threshold;
+          const isRegistered = registeredEvents.includes(ev.id);
+
+          return (
+            <div key={ev.id} className="sage-card" style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <Pill tone={TIER_TONE[ev.tier]}>{TIER_LABEL[ev.tier]}</Pill>
+                {eligible ? <Pill tone="success" icon={Unlock}>Eligible</Pill> : <Pill tone="danger" icon={Lock}>Locked</Pill>}
+              </div>
+              <div style={{ fontWeight:700, fontSize:15 }}>{ev.name}</div>
+              <div style={{ fontSize:12.5, color:'var(--ink-soft)' }}>{ev.org}</div>
+              <div style={{ fontSize:12.5, color:'var(--ink-soft)', display:'flex', gap:10, flexWrap:'wrap' }}>
+                <span><MapPin size={12} style={{ verticalAlign:-2 }} /> {ev.city}</span>
+                <span><Calendar size={12} style={{ verticalAlign:-2 }} /> {ev.date}</span>
+              </div>
+              <div style={{ marginTop:4 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'var(--ink-soft)', marginBottom:4 }}>
+                  <span>{ev.category} Karma needed</span><span>{karma} / {ev.threshold}</span>
+                </div>
+                <ProgressBar pct={(karma/ev.threshold)*100} tone={eligible ? 'sage':'gold'} />
+              </div>
+              
+              {isRegistered ? (
+                <button className="sage-btn sage-btn-outline sage-btn-sm" disabled style={{ marginTop:6, borderColor: 'var(--success)', color: 'var(--success)' }}>
+                  <CheckCircle2 size={14} /> Registered
+                </button>
+              ) : (
+                <button 
+                  className={`sage-btn ${eligible ? 'sage-btn-primary':'sage-btn-outline'} sage-btn-sm`} 
+                  disabled={!eligible} 
+                  style={{ marginTop:6 }}
+                  onClick={() => eligible && setSelectedEvent(ev)}
+                >
+                  {eligible ? 'Register' : `Need ${ev.threshold - karma} more ${ev.category} Karma`}
+                </button>
+              )}
+            </div>
+          );
+        })}
+        {visibleEvents.length === 0 && (
+          <div className="sage-card" style={{ gridColumn:'1/-1', textAlign:'center', color:'var(--ink-soft)' }}>No events for this age band right now.</div>
+        )}
+      </div>
+
+      {selectedEvent && (
+        <EventRegistrationModal 
+          event={selectedEvent} 
+          onClose={() => setSelectedEvent(null)}
+          onSuccess={(id) => {
+            setRegisteredEvents(prev => [...prev, id]);
+            setSelectedEvent(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
