@@ -871,15 +871,117 @@ function Transcript() {
 }
 
 /* ============================= LEARNER: APP SHELL ============================= */
+/* ============================= LEARNER: REGISTRATION GATE ============================= */
 
+function LearnerRegistration({ onLogin, onBack }) {
+  const [name, setName] = useState('');
+  const [apaarId, setApaarId] = useState('');
+  const [schoolCode, setSchoolCode] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Prototype validation: Require a specific code to simulate security
+    if (schoolCode.toUpperCase() !== 'KABIR2026') {
+      setError('Invalid School Registration Code. Try "KABIR2026".');
+      return;
+    }
+    if (!name || !apaarId) {
+      setError('Please fill in your name and APAAR ID.');
+      return;
+    }
+    
+    setError('');
+    onLogin(); // Success! Proceed to dashboard
+  };
+
+  return (
+    <div style={{ maxWidth: 460, margin: '60px auto', padding: '0 20px' }}>
+      <div className="sage-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ textAlign: 'center', marginBottom: 10 }}>
+          <div className="font-display" style={{ fontSize: 28, color: 'var(--ink)' }}>Learner Access</div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: 4 }}>
+            Enter your details and school code to securely access your SAGE portfolio.
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, display: 'block' }}>Full Name</label>
+            <input
+              className="sage-input"
+              placeholder="e.g. Nishchay Goyal"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, display: 'block' }}>Government APAAR ID</label>
+            <input
+              className="sage-input"
+              placeholder="1234-5678-9012"
+              value={apaarId}
+              onChange={(e) => setApaarId(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, display: 'block' }}>School Registration Code</label>
+            <input
+              className="sage-input"
+              type="password"
+              placeholder="Enter KABIR2026 to test"
+              value={schoolCode}
+              onChange={(e) => setSchoolCode(e.target.value)}
+            />
+          </div>
+
+          {error && (
+            <div style={{ fontSize: 13, color: 'var(--danger)', background: '#FBEAE7', padding: '10px 12px', borderRadius: 8, fontWeight: 600 }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <button type="button" className="sage-btn sage-btn-ghost" onClick={onBack}>
+              ← Back
+            </button>
+            <button type="submit" className="sage-btn sage-btn-primary" style={{ flex: 1 }}>
+              Access Dashboard
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 function LearnerApp({ onExit }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [page, setPage] = useState('dashboard');
+  
   const items = [
     { key:'dashboard', label:'Dashboard', icon:LayoutDashboard },
     { key:'square', label:'Public Square', icon:Globe2 },
     { key:'analytics', label:'AI Analytics', icon:Sparkles },
     { key:'transcript', label:'Transcript', icon:FileText },
   ];
+
+  // If they haven't logged in yet, show the registration gate
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <TopNav inRole={false} />
+        <LearnerRegistration 
+          onLogin={() => setIsAuthenticated(true)} 
+          onBack={onExit} 
+        />
+      </div>
+    );
+  }
+
+  // Once authenticated, show the real dashboard
   return (
     <div>
       <TopNav inRole roleLabel="Learner" RoleIcon={GraduationCap} onExit={onExit} />
